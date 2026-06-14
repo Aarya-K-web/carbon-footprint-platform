@@ -286,7 +286,7 @@ function App() {
       <Route
         path="/login"
         element={
-          user ? (
+          user && !user?.isDemo ? (
             <Navigate to={hasOnboarded ? "/dashboard" : "/onboarding"} replace />
           ) : (
             <AuthLayout>
@@ -298,7 +298,7 @@ function App() {
       <Route
         path="/signup"
         element={
-          user ? (
+          user && !user?.isDemo ? (
             <Navigate to={hasOnboarded ? "/dashboard" : "/onboarding"} replace />
           ) : (
             <AuthLayout>
@@ -310,7 +310,7 @@ function App() {
       <Route
         path="/forgot-password"
         element={
-          user ? (
+          user && !user?.isDemo ? (
             <Navigate to={hasOnboarded ? "/dashboard" : "/onboarding"} replace />
           ) : (
             <AuthLayout>

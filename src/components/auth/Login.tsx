@@ -24,33 +24,15 @@ export const Login: React.FC = () => {
 
     setLoading(true);
 
-    const isNetworkError = (msg: string) => {
-      const m = String(msg).toLowerCase();
-      return m.includes('fetch') || m.includes('network') || m.includes('failed');
-    };
-
     try {
       const { error: signInError } = await signIn(email, password);
       if (signInError) {
-        if (isNetworkError(signInError.message)) {
-          console.log('Network error encountered. Switching to offline demo session.');
-          loginDemo(email);
-          navigate('/dashboard');
-          return;
-        }
         setError(signInError.message);
       } else {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      const msg = err?.message || '';
-      if (isNetworkError(msg)) {
-        console.log('Caught network exception. Switching to offline demo session.');
-        loginDemo(email);
-        navigate('/dashboard');
-      } else {
-        setError('An unexpected error occurred. Please try again.');
-      }
+      setError(err?.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

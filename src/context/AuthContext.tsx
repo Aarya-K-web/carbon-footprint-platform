@@ -116,6 +116,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) {
+      localStorage.removeItem('ecopulse_demo_session');
       setSession(data.session);
       setUser(data.user);
     }
@@ -130,8 +131,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         emailRedirectTo: `${window.location.origin}/login`,
       },
     });
+    if (!error) {
+      localStorage.removeItem('ecopulse_demo_session');
+    }
     return { error };
   };
+
 
   const signOut = async () => {
     try {

@@ -58,33 +58,15 @@ export const Signup: React.FC = () => {
 
     setLoading(true);
 
-    const isNetworkError = (msg: string) => {
-      const m = String(msg).toLowerCase();
-      return m.includes('fetch') || m.includes('network') || m.includes('failed');
-    };
-
     try {
       const { error: signUpError } = await signUp(email, password);
       if (signUpError) {
-        if (isNetworkError(signUpError.message)) {
-          console.log('Network error encountered. Switching to offline demo session.');
-          loginDemo(email);
-          navigate('/dashboard');
-          return;
-        }
         setError(signUpError.message);
       } else {
         setSuccess(true);
       }
     } catch (err: any) {
-      const msg = err?.message || '';
-      if (isNetworkError(msg)) {
-        console.log('Caught network exception. Switching to offline demo session.');
-        loginDemo(email);
-        navigate('/dashboard');
-      } else {
-        setError('An unexpected error occurred. Please try again.');
-      }
+      setError(err?.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
