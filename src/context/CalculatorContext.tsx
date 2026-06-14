@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { CalculatorState, CommuteEntry, CalculatorContextType } from '../types/calculator';
+import { CalculatorState, CommuteEntry, CalculatorContextType, LogEntry } from '../types/calculator';
 
 export interface MitigationTask {
   id: string;
@@ -7,6 +7,15 @@ export interface MitigationTask {
   category: 'diet' | 'transport' | 'household';
   description: string;
   annualCO2eSaved: number;
+}
+
+export interface HabitItem {
+  id: string;
+  title: string;
+  category: 'diet' | 'transport' | 'household' | 'waste';
+  description: string;
+  carbonSavedKg: number;
+  icon: string;
 }
 
 export const MITIGATION_TASKS: MitigationTask[] = [
@@ -54,6 +63,41 @@ export const MITIGATION_TASKS: MitigationTask[] = [
   },
 ];
 
+export const HABIT_DICTIONARY: HabitItem[] = [
+  {
+    id: 'habit-carpool',
+    title: 'Log a Carpool Commute',
+    category: 'transport',
+    description: 'Share a vehicle commute with colleagues instead of driving solo.',
+    carbonSavedKg: 4.0,
+    icon: '🚗',
+  },
+  {
+    id: 'habit-plastic',
+    title: 'Avoid Single-use Plastic',
+    category: 'waste',
+    description: 'Refuse plastic grocery bags, bottles, or packaging throughout the day.',
+    carbonSavedKg: 1.0,
+    icon: '🥤',
+  },
+  {
+    id: 'habit-meal',
+    title: 'Plant-Based Meal Choice',
+    category: 'diet',
+    description: 'Substitute meat or poultry for a fully vegan lunch or dinner.',
+    carbonSavedKg: 2.0,
+    icon: '🥗',
+  },
+  {
+    id: 'habit-coldwash',
+    title: 'Cold Water Laundry Cycle',
+    category: 'household',
+    description: 'Wash a load of clothing on cold settings to bypass water heating.',
+    carbonSavedKg: 1.5,
+    icon: '🧼',
+  },
+];
+
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
 
 const initialState: CalculatorState = {
@@ -85,6 +129,16 @@ const initialState: CalculatorState = {
     activeTaskIds: [],
     completedTaskIds: [],
   },
+  activityLogs: [],
+  gamification: {
+    currentStreakDays: 0,
+    highestStreakDays: 0,
+    unlockedBadges: [],
+  },
+  sandbox: {
+    veganDaysPerWeekSim: 0,
+    carKmReductionSim: 0,
+  },
   ui: {
     currentStep: 'welcome',
     isSubmitting: false,
@@ -97,13 +151,20 @@ const initialState: CalculatorState = {
     totalAnnualCO2e: 0,
     mitigationCO2eSavings: 0,
     reducedAnnualCO2e: 0,
+    equivalencies: {
+      treesRequiredCount: 0,
+      iceCarDistanceEquivalentKm: 0,
+    },
+    sandboxProjectedCO2e: 0,
   },
 };
 
 // Pure mathematical engine for emission calculations
 const calculateResults = (
   habits: CalculatorState['habits'],
-  completedTaskIds: string[]
+  completedTaskIds: string[],
+  activityLogs: LogEntry[],
+  sandbox: CalculatorState['sandbox']
 ): CalculatorState['results'] => {
   // 1. Diet Calculation (daily footprint * 365.25 days)
   let dietCoeff = 0;
@@ -176,13 +237,31 @@ const calculateResults = (
   // 4. Grand Total
   const totalAnnualCO2e = dietAnnualCO2e + transportAnnualCO2e + householdAnnualCO2e;
 
-  // 5. Module B: Mitigation calculations
-  const mitigationCO2eSavings = completedTaskIds.reduce((sum, taskId) => {
+  // 5. Module B & Sprint 2: Mitigation calculations
+  // Sum structural checklist tasks savings
+  const checklistSavings = completedTaskIds.reduce((sum, taskId) => {
     const task = MITIGATION_TASKS.find(t => t.id === taskId);
     return sum + (task ? task.annualCO2eSaved : 0);
   }, 0);
 
+  // Sum dynamic ledger log savings
+  const ledgerSavings = activityLogs.reduce((sum, log) => {
+    return sum + log.carbonSavedKg;
+  }, 0);
+
+  const mitigationCO2eSavings = checklistSavings + ledgerSavings;
+
+  // Enforce boundary rule protecting net footprint from dipping below zero
   const reducedAnnualCO2e = Math.max(0, totalAnnualCO2e - mitigationCO2eSavings);
+
+  // 6. Sprint 1: Carbon Equivalency Calculations
+  const treesRequiredCount = reducedAnnualCO2e / 22;
+  const iceCarDistanceEquivalentKm = reducedAnnualCO2e / 0.20;
+
+  // 7. Sprint 3: Sandbox Projected Carbon Emissions
+  const sandboxDietSavings = sandbox.veganDaysPerWeekSim * (2.6 - 1.5) * 52.177;
+  const sandboxTransitSavings = sandbox.carKmReductionSim * 0.18 * 52.177;
+  const sandboxProjectedCO2e = Math.max(0, reducedAnnualCO2e - sandboxDietSavings - sandboxTransitSavings);
 
   return {
     dietAnnualCO2e,
@@ -191,15 +270,25 @@ const calculateResults = (
     totalAnnualCO2e,
     mitigationCO2eSavings,
     reducedAnnualCO2e,
+    equivalencies: {
+      treesRequiredCount,
+      iceCarDistanceEquivalentKm,
+    },
+    sandboxProjectedCO2e,
   };
 };
 
 export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<CalculatorState>(initialState);
 
-  // Automatically recalculate emissions and update active actions list
+  // Automatically recalculate emissions, update active tasks, and check gamification milestones
   useEffect(() => {
-    const calculatedResults = calculateResults(state.habits, state.mitigation.completedTaskIds);
+    const calculatedResults = calculateResults(
+      state.habits, 
+      state.mitigation.completedTaskIds,
+      state.activityLogs,
+      state.sandbox
+    );
     
     // Threshold validation system based on blueprint triggers
     const highDiet = calculatedResults.dietAnnualCO2e > 1200;
@@ -222,6 +311,16 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
       activeTaskIds = MITIGATION_TASKS.map(t => t.id);
     }
 
+    // Gamification Milestone evaluation
+    const unlockedBadges: string[] = [];
+    if (state.activityLogs.length > 0) {
+      unlockedBadges.push('badge-first-step');
+    }
+    const totalLedgerSavings = state.activityLogs.reduce((sum, log) => sum + log.carbonSavedKg, 0);
+    if (totalLedgerSavings >= 20) {
+      unlockedBadges.push('badge-eco-guardian');
+    }
+
     // Prevent infinite loop by checking if values actually changed
     setState(prev => {
       const resultsChanged =
@@ -230,13 +329,20 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
         prev.results.householdAnnualCO2e !== calculatedResults.householdAnnualCO2e ||
         prev.results.totalAnnualCO2e !== calculatedResults.totalAnnualCO2e ||
         prev.results.mitigationCO2eSavings !== calculatedResults.mitigationCO2eSavings ||
-        prev.results.reducedAnnualCO2e !== calculatedResults.reducedAnnualCO2e;
+        prev.results.reducedAnnualCO2e !== calculatedResults.reducedAnnualCO2e ||
+        prev.results.sandboxProjectedCO2e !== calculatedResults.sandboxProjectedCO2e ||
+        prev.results.equivalencies.treesRequiredCount !== calculatedResults.equivalencies.treesRequiredCount ||
+        prev.results.equivalencies.iceCarDistanceEquivalentKm !== calculatedResults.equivalencies.iceCarDistanceEquivalentKm;
 
       const activeTasksChanged = 
         prev.mitigation.activeTaskIds.length !== activeTaskIds.length ||
         prev.mitigation.activeTaskIds.some((id, idx) => id !== activeTaskIds[idx]);
 
-      if (!resultsChanged && !activeTasksChanged) {
+      const badgesChanged =
+        prev.gamification.unlockedBadges.length !== unlockedBadges.length ||
+        prev.gamification.unlockedBadges.some((id, idx) => id !== unlockedBadges[idx]);
+
+      if (!resultsChanged && !activeTasksChanged && !badgesChanged) {
         return prev;
       }
 
@@ -247,9 +353,13 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
           ...prev.mitigation,
           activeTaskIds,
         },
+        gamification: {
+          ...prev.gamification,
+          unlockedBadges,
+        },
       };
     });
-  }, [state.habits, state.mitigation.completedTaskIds]);
+  }, [state.habits, state.mitigation.completedTaskIds, state.activityLogs, state.sandbox]);
 
   // UI Step transition controller
   const setStep = (step: CalculatorState['ui']['currentStep']) => {
@@ -302,6 +412,85 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
     });
   };
 
+  // Add a daily activity log entry and evaluate streaks
+  const addActivityLog = (habitId: string) => {
+    const habit = HABIT_DICTIONARY.find(h => h.id === habitId);
+    if (!habit) return;
+
+    const now = Date.now();
+    const newLog: LogEntry = {
+      id: Math.random().toString(36).substring(2, 11),
+      timestamp: now,
+      activityId: habitId,
+      title: habit.title,
+      category: habit.category,
+      carbonSavedKg: habit.carbonSavedKg,
+    };
+
+    setState(prev => {
+      const newLogs = [...prev.activityLogs, newLog];
+      
+      let currentStreak = prev.gamification.currentStreakDays;
+      let highestStreak = prev.gamification.highestStreakDays;
+
+      if (prev.activityLogs.length === 0) {
+        currentStreak = 1;
+      } else {
+        // Sort logs to find the most recent entry
+        const sortedLogs = [...prev.activityLogs].sort((a, b) => b.timestamp - a.timestamp);
+        const lastLogTime = sortedLogs[0].timestamp;
+        
+        const diffMs = now - lastLogTime;
+        const diffHours = diffMs / (1000 * 60 * 60);
+
+        const lastLogDate = new Date(lastLogTime).toDateString();
+        const currentDate = new Date(now).toDateString();
+
+        if (lastLogDate !== currentDate) {
+          // If logged on a consecutive day within 36 hours, increment streak
+          if (diffHours <= 36) {
+            currentStreak += 1;
+          } else {
+            // Streak broken, reset
+            currentStreak = 1;
+          }
+        }
+        // Same-day logging preserves current streak
+      }
+
+      highestStreak = Math.max(highestStreak, currentStreak);
+
+      return {
+        ...prev,
+        activityLogs: newLogs,
+        gamification: {
+          ...prev.gamification,
+          currentStreakDays: currentStreak,
+          highestStreakDays: highestStreak,
+        },
+      };
+    });
+  };
+
+  // Remove a daily activity log entry
+  const removeActivityLog = (logId: string) => {
+    setState(prev => ({
+      ...prev,
+      activityLogs: prev.activityLogs.filter(log => log.id !== logId),
+    }));
+  };
+
+  // Update sandbox simulator sliders state
+  const updateSandbox = (field: keyof CalculatorState['sandbox'], value: number) => {
+    setState(prev => ({
+      ...prev,
+      sandbox: {
+        ...prev.sandbox,
+        [field]: value,
+      },
+    }));
+  };
+
   // Set form validation errors
   const setValidationErrors = (errors: Record<string, string>) => {
     setState(prev => ({
@@ -340,6 +529,9 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
         setIsSubmitting,
         resetCalculator,
         toggleTaskCompletion,
+        addActivityLog,
+        removeActivityLog,
+        updateSandbox,
       }}
     >
       {children}

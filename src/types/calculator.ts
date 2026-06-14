@@ -4,6 +4,40 @@ export interface CommuteEntry {
   distancePerWeekKm: number | null;
 }
 
+export interface RegionalFootprint {
+  region: 'global' | 'us' | 'eu' | 'india' | 'target';
+  label: string;
+  annualCO2e: number;
+}
+
+export const REGIONAL_COMPARISONS: RegionalFootprint[] = [
+  { region: 'us', label: 'United States Average', annualCO2e: 16000 },
+  { region: 'eu', label: 'European Union Average', annualCO2e: 6400 },
+  { region: 'global', label: 'Global Average', annualCO2e: 4500 },
+  { region: 'target', label: 'Sustainable Goal (1.5°C Limit)', annualCO2e: 2000 },
+  { region: 'india', label: 'India Average', annualCO2e: 1900 },
+];
+
+export interface LogEntry {
+  id: string;
+  timestamp: number;
+  activityId: string;
+  title: string;
+  category: 'diet' | 'transport' | 'household' | 'waste';
+  carbonSavedKg: number;
+}
+
+export interface GamificationState {
+  currentStreakDays: number;
+  highestStreakDays: number;
+  unlockedBadges: string[];
+}
+
+export interface SandboxState {
+  veganDaysPerWeekSim: number;
+  carKmReductionSim: number;
+}
+
 export interface CalculatorState {
   // Raw and processed user habits inputs
   habits: {
@@ -37,6 +71,13 @@ export interface CalculatorState {
     completedTaskIds: string[]; // Task IDs checked off by the user
   };
 
+  // Sprint 2: Core Tracking & Smart Budget Ledger
+  activityLogs: LogEntry[];
+  gamification: GamificationState;
+
+  // Sprint 3: "What-If" Sandbox Simulator
+  sandbox: SandboxState;
+
   // UI/UX state management
   ui: {
     currentStep: 'welcome' | 'diet' | 'transport' | 'household' | 'results';
@@ -54,6 +95,15 @@ export interface CalculatorState {
     // Module B live mitigation outcomes
     mitigationCO2eSavings: number; // Total savings from checked actions
     reducedAnnualCO2e: number;     // Net footprint (total - savings)
+
+    // Sprint 1 environmental equivalency offsets
+    equivalencies: {
+      treesRequiredCount: number;         // Mature trees required to absorb net annual carbon
+      iceCarDistanceEquivalentKm: number; // Equivalent distance driven in km (standard gasoline car)
+    };
+
+    // Sprint 3 sandbox projected emissions
+    sandboxProjectedCO2e: number;
   };
 }
 
@@ -71,4 +121,11 @@ export interface CalculatorContextType {
   
   // Module B action handlers
   toggleTaskCompletion: (taskId: string) => void;
+
+  // Sprint 2 action handlers
+  addActivityLog: (habitId: string) => void;
+  removeActivityLog: (logId: string) => void;
+
+  // Sprint 3 action handlers
+  updateSandbox: (field: keyof SandboxState, value: number) => void;
 }
