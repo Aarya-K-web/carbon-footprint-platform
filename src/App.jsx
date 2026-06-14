@@ -107,8 +107,22 @@ const AuthLayout = ({ children }) => {
 
 // 2. Shared Layout for Protected Dashboard
 const DashboardLayout = () => {
+  const { userProfile } = useAuth();
   const { state, setStep } = useCalculator();
   const { currentStep } = state.ui;
+
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-400 rounded-full animate-spin" />
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider animate-pulse">
+            Loading Profile...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const steps = [
     { id: 'welcome', label: 'Welcome' },
@@ -207,6 +221,21 @@ const DashboardLayout = () => {
 
 // 3. Shared Layout for User Profile Setting Page
 const ProfileLayout = () => {
+  const { userProfile } = useAuth();
+
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-400 rounded-full animate-spin" />
+          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider animate-pulse">
+            Loading Profile...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-950 text-slate-100 flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Decorative Orbs */}

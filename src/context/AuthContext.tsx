@@ -36,6 +36,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await fetchProfile(user.id);
       if (!error && data) {
         setUserProfile(data);
+      } else {
+        // Fallback: If profiles table query fails (e.g. table does not exist yet or connection fails),
+        // we set a default profile so the app doesn't hang.
+        setUserProfile({
+          id: user.id,
+          full_name: '',
+          avatar_url: '',
+          sustainability_goal: 'low-carbon',
+          target_carbon_reduction: 15,
+          sustainability_score: 0,
+          onboarding_completed: false,
+        });
       }
       setLoadingProfile(false);
     }
