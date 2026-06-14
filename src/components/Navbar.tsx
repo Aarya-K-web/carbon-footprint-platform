@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { validatePassword } from '../utils/authValidation';
 
@@ -97,6 +98,7 @@ export const Navbar: React.FC = () => {
 
   const isPasswordValid = Object.values(validation).every(Boolean);
   const isDemoUser = (user as any).isDemo;
+  const navigate = useNavigate();
 
   return (
     <>
@@ -131,9 +133,13 @@ export const Navbar: React.FC = () => {
           {/* Profile Dropdown Toggle */}
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 hover:border-emerald-500/50 flex items-center justify-center text-xs font-bold text-emerald-400 shadow-md transition-all cursor-pointer"
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 hover:border-emerald-500/50 flex items-center justify-center text-xs font-bold text-emerald-400 shadow-md transition-all cursor-pointer overflow-hidden"
           >
-            {userInitials}
+            {userProfile?.avatar_url ? (
+              <img src={userProfile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              userInitials
+            )}
           </button>
 
           {/* Dropdown Menu list card */}
@@ -143,6 +149,16 @@ export const Navbar: React.FC = () => {
                 <p className="text-[10px] font-bold text-slate-400 truncate">{user.email}</p>
                 <p className="text-[8px] text-slate-500 font-mono">{isDemoUser ? 'Offline Session' : 'Secured Session'}</p>
               </div>
+
+              <button
+                onClick={() => {
+                  setDropdownOpen(false);
+                  navigate('/profile');
+                }}
+                className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-900 rounded-lg transition-colors cursor-pointer flex items-center gap-2"
+              >
+                👤 Edit Profile
+              </button>
 
               {!isDemoUser && (
                 <button

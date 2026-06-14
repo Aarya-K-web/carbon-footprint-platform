@@ -11,6 +11,10 @@ import { ResetPassword } from './components/auth/ResetPassword';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Navbar } from './components/Navbar';
 
+// Import Profile screens
+import { Onboarding } from './components/profile/Onboarding';
+import { UserProfile } from './components/profile/UserProfile';
+
 // Import Onboarding steps
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { DietScreen } from './components/DietScreen';
@@ -201,11 +205,38 @@ const DashboardLayout = () => {
   );
 };
 
-// 3. App Core Router Configuration
-function App() {
-  const { user, loading } = useAuth();
+// 3. Shared Layout for User Profile Setting Page
+const ProfileLayout = () => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-950 text-slate-100 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative Orbs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] -z-10 animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-[100px] -z-10" />
 
-  if (loading) {
+      {/* Workspace Layout */}
+      <div className="max-w-2xl w-full flex flex-col gap-6">
+        <Navbar />
+        
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-2xl shadow-2xl p-6 sm:p-8 transition-all duration-300 ease-in-out">
+          <UserProfile />
+        </div>
+        
+        <div className="text-center text-xs text-slate-600">
+          Secured User Profile Management.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 4. App Core Router Configuration
+function App() {
+  const { user, loading, userProfile, loadingProfile } = useAuth();
+
+  // Combine auth loading states to prevent layout flash during database fetches
+  const isSessionLoading = loading || (user && !userProfile && loadingProfile);
+
+  if (isSessionLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
         <div className="flex flex-col items-center gap-4 text-center">
@@ -218,6 +249,8 @@ function App() {
     );
   }
 
+  const hasOnboarded = userProfile?.onboarding_completed;
+
   return (
     <Routes>
       {/* Guest Paths */}
@@ -225,7 +258,7 @@ function App() {
         path="/login"
         element={
           user ? (
-            <Navigate to="/dashboard" replace />
+            <Navigate to={hasOnboarded ? "/dashboard" : "/onboarding"} replace />
           ) : (
             <AuthLayout>
               <Login />
@@ -237,7 +270,7 @@ function App() {
         path="/signup"
         element={
           user ? (
-            <Navigate to="/dashboard" replace />
+            <Navigate to={hasOnboarded ? "/dashboard" : "/onboarding"} replace />
           ) : (
             <AuthLayout>
               <Signup />
@@ -249,7 +282,7 @@ function App() {
         path="/forgot-password"
         element={
           user ? (
-            <Navigate to="/dashboard" replace />
+            <Navigate to={hasOnboarded ? "/dashboard" : "/onboarding"} replace />
           ) : (
             <AuthLayout>
               <ForgotPassword />
@@ -266,12 +299,46 @@ function App() {
         }
       />
 
+      {/* Onboarding Flow Page */}
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+            {hasOnboarded ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <AuthLayout>
+                <Onboarding />
+              </AuthLayout>
+            )}
+          </ProtectedRoute>
+        }
+      />
+
       {/* Protected Workspace Path */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <DashboardLayout />
+            {!hasOnboarded ? (
+              <Navigate to="/onboarding" replace />
+            ) : (
+              <DashboardLayout />
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected Profile Settings Path */}
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            {!hasOnboarded ? (
+              <Navigate to="/onboarding" replace />
+            ) : (
+              <ProfileLayout />
+            )}
           </ProtectedRoute>
         }
       />
@@ -279,11 +346,11 @@ function App() {
       {/* Wildcard Fallback Paths */}
       <Route
         path="/"
-        element={<Navigate to={user ? "/dashboard" : "/login"} replace />}
+        element={<Navigate to={user ? (hasOnboarded ? "/dashboard" : "/onboarding") : "/login"} replace />}
       />
       <Route
         path="*"
-        element={<Navigate to={user ? "/dashboard" : "/login"} replace />}
+        element={<Navigate to={user ? (hasOnboarded ? "/dashboard" : "/onboarding") : "/login"} replace />}
       />
     </Routes>
   );
