@@ -80,9 +80,7 @@ export interface CalculatorState {
   // Sprint 3: "What-If" Sandbox Simulator
   sandbox: SandboxState;
 
-  // Authentication session state properties
-  user: User | null;
-  loadingAuth: boolean;
+
 
   // UI/UX state management
   ui: {
@@ -135,6 +133,4 @@ export interface CalculatorContextType {
   // Sprint 3 action handlers
   updateSandbox: (field: keyof SandboxState, value: number) => void;
 
-  // Demo Mode action handlers
-  loginDemoUser: (email?: string) => void;
 }
