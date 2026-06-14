@@ -8,7 +8,7 @@ import { HouseholdScreen } from './components/HouseholdScreen';
 import { ResultsScreen } from './components/ResultsScreen';
 
 function App() {
-  const { state, setStep, resetCalculator } = useCalculator();
+  const { state, setStep, resetCalculator, loginDemoUser } = useCalculator();
   const { currentStep } = state.ui;
   const { user, loadingAuth } = state;
 
@@ -24,11 +24,21 @@ function App() {
     e.preventDefault();
     setAuthError('');
     setAuthLoading(true);
-    
+
+    const isNetworkError = (msg) => {
+      const m = String(msg).toLowerCase();
+      return m.includes('fetch') || m.includes('network') || m.includes('failed');
+    };
+
     try {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) {
+          if (isNetworkError(error.message)) {
+            console.log('Network error during signup. Activating Offline Mode.');
+            loginDemoUser(email);
+            return;
+          }
           setAuthError(error.message);
         } else {
           alert('Check your email for a confirmation link to complete registration!');
@@ -39,19 +49,37 @@ function App() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
+          if (isNetworkError(error.message)) {
+            console.log('Network error during login. Activating Offline Mode.');
+            loginDemoUser(email);
+            return;
+          }
           setAuthError(error.message);
         }
       }
     } catch (err) {
-      setAuthError('An unexpected authentication error occurred.');
+      const msg = err?.message || '';
+      if (isNetworkError(msg)) {
+        console.log('Caught network exception. Activating Offline Mode.');
+        loginDemoUser(email);
+      } else {
+        setAuthError('An unexpected authentication error occurred.');
+      }
     } finally {
       setAuthLoading(false);
     }
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    resetCalculator();
+    try {
+      if (user && user.id !== 'demo-user-id') {
+        await supabase.auth.signOut();
+      }
+    } catch (err) {
+      console.warn('Network error during Supabase signOut. Proceeding with local signout.');
+    } finally {
+      resetCalculator();
+    }
   };
 
   // Simple steps list for stepper UI
@@ -111,7 +139,7 @@ function App() {
           <div className="flex items-center gap-2">
             <span className="text-emerald-500 text-xl">🌱</span>
             <span className="text-2xl font-black bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent tracking-tight">
-              EcoTrace
+              EcoPulse
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono">
@@ -136,7 +164,7 @@ function App() {
             </h1>
             
             <p className="text-slate-400 text-sm sm:text-base max-w-lg leading-relaxed">
-              EcoTrace is an elite carbon diagnostic ledger that helps you compute, simulate, and check off sustainable goals. Sign in to sync your achievements and build a net-zero streak.
+              EcoPulse is an elite carbon diagnostic ledger that helps you compute, simulate, and check off sustainable goals. Sign in to sync your achievements and build a net-zero streak.
             </p>
 
             {/* Features Micro Cards Grid */}
@@ -180,8 +208,19 @@ function App() {
 
             {/* Error alerts */}
             {authError && (
-              <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3 rounded-xl mb-4 text-left font-medium animate-fadeIn">
-                ⚠️ {authError}
+              <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs p-3 rounded-xl mb-4 text-left font-medium animate-fadeIn space-y-2">
+                <div>⚠️ {authError}</div>
+                {authError.toLowerCase().includes('fetch') && (
+                  <div className="pt-1.5 border-t border-rose-500/10">
+                    <button
+                      type="button"
+                      onClick={() => loginDemoUser(email || 'demo@ecopulse.org')}
+                      className="text-emerald-400 hover:text-emerald-300 font-bold underline cursor-pointer transition-colors text-[10px]"
+                    >
+                      💡 Network Issue? Continue in Offline Demo Mode ➜
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -226,6 +265,24 @@ function App() {
               </button>
             </form>
 
+            {!isSignUp && (
+              <>
+                <div className="relative flex py-2.5 items-center">
+                  <div className="flex-grow border-t border-slate-800"></div>
+                  <span className="flex-shrink mx-3 text-[9px] text-slate-500 font-mono tracking-wider">OR</span>
+                  <div className="flex-grow border-t border-slate-800"></div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => loginDemoUser('demo@ecopulse.org')}
+                  className="w-full py-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-semibold rounded-xl text-xs shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  ⚡ Launch Demo Mode (Offline)
+                </button>
+              </>
+            )}
+
             {/* Switch Mode Toggle */}
             <div className="mt-6 pt-4 border-t border-slate-800/80 text-center text-xs">
               <span className="text-slate-500">
@@ -247,7 +304,7 @@ function App() {
 
         {/* Footer */}
         <footer className="py-4 text-xs text-slate-600 border-t border-slate-900 w-full max-w-5xl text-center">
-          © 2026 EcoTrace Carbon Diagnostics Inc. Encrypted user sessions.
+          © 2026 EcoPulse Carbon Diagnostics Inc. Encrypted user sessions.
         </footer>
       </div>
     );
@@ -268,11 +325,16 @@ function App() {
           <div className="flex items-center gap-2">
             <span className="text-emerald-500 text-lg">🌱</span>
             <span className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-              EcoTrace
+              EcoPulse
             </span>
             <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono uppercase font-bold shrink-0">
               Workspace
             </span>
+            {user.id === 'demo-user-id' && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono uppercase font-bold shrink-0">
+                Offline Mode
+              </span>
+            )}
           </div>
           
           {/* User Profile Info & Sign Out */}
@@ -281,7 +343,9 @@ function App() {
               <div className="text-[10px] text-slate-400 font-bold leading-none truncate max-w-[150px]">
                 {user.email}
               </div>
-              <span className="text-[8px] text-slate-500 font-mono tracking-wide">Secured Session</span>
+              <span className="text-[8px] text-slate-500 font-mono tracking-wide">
+                {user.id === 'demo-user-id' ? 'Offline Demo Session' : 'Secured Session'}
+              </span>
             </div>
             
             <button

@@ -286,17 +286,40 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
 
   // Set up active Supabase auth subscription listeners
   useEffect(() => {
-    // Check active session on initial load
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setState(prev => ({
-        ...prev,
-        user: session?.user ?? null,
-        loadingAuth: false,
-      }));
-    });
+    // Check local storage for a demo session first
+    const demoSession = localStorage.getItem('ecopulse_demo_session');
+    if (demoSession) {
+      try {
+        const parsed = JSON.parse(demoSession);
+        setState(prev => ({
+          ...prev,
+          user: parsed,
+          loadingAuth: false,
+        }));
+      } catch (e) {
+        localStorage.removeItem('ecopulse_demo_session');
+      }
+    } else {
+      // Check active session on initial load
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setState(prev => ({
+          ...prev,
+          user: session?.user ?? null,
+          loadingAuth: false,
+        }));
+      }).catch(() => {
+        setState(prev => ({
+          ...prev,
+          loadingAuth: false,
+        }));
+      });
+    }
 
     // Listen for auth state transitions (Sign In, Sign Out, Token Refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (localStorage.getItem('ecopulse_demo_session')) {
+        return; // Ignore auth change during active demo session
+      }
       setState(prev => ({
         ...prev,
         user: session?.user ?? null,
@@ -543,7 +566,26 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
 
   // Reset to initial baseline
   const resetCalculator = () => {
-    setState(initialState);
+    localStorage.removeItem('ecopulse_demo_session');
+    setState(prev => ({
+      ...initialState,
+      loadingAuth: false,
+    }));
+  };
+
+  // Login a demo user for offline mode bypass
+  const loginDemoUser = (emailAddress?: string) => {
+    const mockUser = {
+      id: 'demo-user-id',
+      email: emailAddress || 'demo@ecopulse.org',
+      email_confirmed_at: new Date().toISOString(),
+      role: 'authenticated',
+    };
+    localStorage.setItem('ecopulse_demo_session', JSON.stringify(mockUser));
+    setState(prev => ({
+      ...prev,
+      user: mockUser as any,
+    }));
   };
 
   return (
@@ -560,6 +602,7 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
         addActivityLog,
         removeActivityLog,
         updateSandbox,
+        loginDemoUser,
       }}
     >
       {children}

@@ -134,4 +134,7 @@ export interface CalculatorContextType {
 
   // Sprint 3 action handlers
   updateSandbox: (field: keyof SandboxState, value: number) => void;
+
+  // Demo Mode action handlers
+  loginDemoUser: (email?: string) => void;
 }
