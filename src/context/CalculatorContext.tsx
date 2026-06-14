@@ -1,18 +1,58 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { CalculatorState, CommuteEntry } from '../types/calculator';
+import { CalculatorState, CommuteEntry, CalculatorContextType } from '../types/calculator';
 
-export interface CalculatorContextType {
-  state: CalculatorState;
-  setState: React.Dispatch<React.SetStateAction<CalculatorState>>;
-  setStep: (step: CalculatorState['ui']['currentStep']) => void;
-  updateHabits: <C extends keyof CalculatorState['habits']>(
-    category: C,
-    data: Partial<CalculatorState['habits'][C]> | ((prev: CalculatorState['habits'][C]) => CalculatorState['habits'][C])
-  ) => void;
-  setValidationErrors: (errors: Record<string, string>) => void;
-  setIsSubmitting: (isSubmitting: boolean) => void;
-  resetCalculator: () => void;
+export interface MitigationTask {
+  id: string;
+  title: string;
+  category: 'diet' | 'transport' | 'household';
+  description: string;
+  annualCO2eSaved: number;
 }
+
+export const MITIGATION_TASKS: MitigationTask[] = [
+  {
+    id: 'mit-diet-meatless',
+    title: 'Meatless Mondays',
+    category: 'diet',
+    description: 'Swap animal proteins for plant-based meals 1 day per week.',
+    annualCO2eSaved: 150,
+  },
+  {
+    id: 'mit-diet-compost',
+    title: 'Zero-Waste Composting',
+    category: 'diet',
+    description: 'Compost organic waste to prevent anaerobic landfill methane emissions.',
+    annualCO2eSaved: 80,
+  },
+  {
+    id: 'mit-trans-transit',
+    title: 'Public Transit Shift',
+    category: 'transport',
+    description: 'Replace 80 km/week of driving a gasoline car with rail/bus commuting.',
+    annualCO2eSaved: 450,
+  },
+  {
+    id: 'mit-trans-flight',
+    title: 'Rail-over-Flight Choice',
+    category: 'transport',
+    description: 'Swap one short-haul flight (1,000 km) for rail or a local staycation.',
+    annualCO2eSaved: 110,
+  },
+  {
+    id: 'mit-house-thermostat',
+    title: 'Smart Thermostat Adjust',
+    category: 'household',
+    description: 'Lower winter heating by 1°C and raise summer cooling by 1°C.',
+    annualCO2eSaved: 180,
+  },
+  {
+    id: 'mit-house-laundry',
+    title: 'Natural Air-Drying',
+    category: 'household',
+    description: 'Hang-dry laundry instead of running an electric tumble dryer 3 times a week.',
+    annualCO2eSaved: 120,
+  },
+];
 
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
 
@@ -41,6 +81,10 @@ const initialState: CalculatorState = {
       },
     },
   },
+  mitigation: {
+    activeTaskIds: [],
+    completedTaskIds: [],
+  },
   ui: {
     currentStep: 'welcome',
     isSubmitting: false,
@@ -51,11 +95,16 @@ const initialState: CalculatorState = {
     transportAnnualCO2e: 0,
     householdAnnualCO2e: 0,
     totalAnnualCO2e: 0,
+    mitigationCO2eSavings: 0,
+    reducedAnnualCO2e: 0,
   },
 };
 
 // Pure mathematical engine for emission calculations
-const calculateResults = (habits: CalculatorState['habits']): CalculatorState['results'] => {
+const calculateResults = (
+  habits: CalculatorState['habits'],
+  completedTaskIds: string[]
+): CalculatorState['results'] => {
   // 1. Diet Calculation (daily footprint * 365.25 days)
   let dietCoeff = 0;
   switch (habits.diet.type) {
@@ -127,39 +176,80 @@ const calculateResults = (habits: CalculatorState['habits']): CalculatorState['r
   // 4. Grand Total
   const totalAnnualCO2e = dietAnnualCO2e + transportAnnualCO2e + householdAnnualCO2e;
 
+  // 5. Module B: Mitigation calculations
+  const mitigationCO2eSavings = completedTaskIds.reduce((sum, taskId) => {
+    const task = MITIGATION_TASKS.find(t => t.id === taskId);
+    return sum + (task ? task.annualCO2eSaved : 0);
+  }, 0);
+
+  const reducedAnnualCO2e = Math.max(0, totalAnnualCO2e - mitigationCO2eSavings);
+
   return {
     dietAnnualCO2e,
     transportAnnualCO2e,
     householdAnnualCO2e,
     totalAnnualCO2e,
+    mitigationCO2eSavings,
+    reducedAnnualCO2e,
   };
 };
 
 export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<CalculatorState>(initialState);
 
-  // Automatically recalculate emissions whenever user habits state changes
+  // Automatically recalculate emissions and update active actions list
   useEffect(() => {
-    const calculatedResults = calculateResults(state.habits);
+    const calculatedResults = calculateResults(state.habits, state.mitigation.completedTaskIds);
     
-    // Prevent infinite loop by checking if the calculated numbers actually changed
+    // Threshold validation system based on blueprint triggers
+    const highDiet = calculatedResults.dietAnnualCO2e > 1200;
+    const highTransport = calculatedResults.transportAnnualCO2e > 1500;
+    const highHousehold = calculatedResults.householdAnnualCO2e > 1200;
+
+    let activeTaskIds: string[] = [];
+    if (highDiet) {
+      activeTaskIds.push(...MITIGATION_TASKS.filter(t => t.category === 'diet').map(t => t.id));
+    }
+    if (highTransport) {
+      activeTaskIds.push(...MITIGATION_TASKS.filter(t => t.category === 'transport').map(t => t.id));
+    }
+    if (highHousehold) {
+      activeTaskIds.push(...MITIGATION_TASKS.filter(t => t.category === 'household').map(t => t.id));
+    }
+
+    // Fallback: if no categories exceed thresholds, activate all tasks by default
+    if (activeTaskIds.length === 0) {
+      activeTaskIds = MITIGATION_TASKS.map(t => t.id);
+    }
+
+    // Prevent infinite loop by checking if values actually changed
     setState(prev => {
       const resultsChanged =
         prev.results.dietAnnualCO2e !== calculatedResults.dietAnnualCO2e ||
         prev.results.transportAnnualCO2e !== calculatedResults.transportAnnualCO2e ||
         prev.results.householdAnnualCO2e !== calculatedResults.householdAnnualCO2e ||
-        prev.results.totalAnnualCO2e !== calculatedResults.totalAnnualCO2e;
+        prev.results.totalAnnualCO2e !== calculatedResults.totalAnnualCO2e ||
+        prev.results.mitigationCO2eSavings !== calculatedResults.mitigationCO2eSavings ||
+        prev.results.reducedAnnualCO2e !== calculatedResults.reducedAnnualCO2e;
 
-      if (!resultsChanged) {
+      const activeTasksChanged = 
+        prev.mitigation.activeTaskIds.length !== activeTaskIds.length ||
+        prev.mitigation.activeTaskIds.some((id, idx) => id !== activeTaskIds[idx]);
+
+      if (!resultsChanged && !activeTasksChanged) {
         return prev;
       }
 
       return {
         ...prev,
         results: calculatedResults,
+        mitigation: {
+          ...prev.mitigation,
+          activeTaskIds,
+        },
       };
     });
-  }, [state.habits]);
+  }, [state.habits, state.mitigation.completedTaskIds]);
 
   // UI Step transition controller
   const setStep = (step: CalculatorState['ui']['currentStep']) => {
@@ -188,6 +278,25 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
         habits: {
           ...prev.habits,
           [category]: newCategoryState,
+        },
+      };
+    });
+  };
+
+  // Toggle mitigation task completion state
+  const toggleTaskCompletion = (taskId: string) => {
+    setState(prev => {
+      const completed = prev.mitigation.completedTaskIds;
+      const isCompleted = completed.includes(taskId);
+      const newCompleted = isCompleted
+        ? completed.filter(id => id !== taskId)
+        : [...completed, taskId];
+
+      return {
+        ...prev,
+        mitigation: {
+          ...prev.mitigation,
+          completedTaskIds: newCompleted,
         },
       };
     });
@@ -230,6 +339,7 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
         setValidationErrors,
         setIsSubmitting,
         resetCalculator,
+        toggleTaskCompletion,
       }}
     >
       {children}

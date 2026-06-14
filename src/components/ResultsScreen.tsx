@@ -1,9 +1,17 @@
 import React from 'react';
-import { useCalculator } from '../context/CalculatorContext';
+import { useCalculator, MITIGATION_TASKS } from '../context/CalculatorContext';
 
 export const ResultsScreen: React.FC = () => {
-  const { state, resetCalculator } = useCalculator();
-  const { dietAnnualCO2e, transportAnnualCO2e, householdAnnualCO2e, totalAnnualCO2e } = state.results;
+  const { state, resetCalculator, toggleTaskCompletion } = useCalculator();
+  
+  const { 
+    dietAnnualCO2e, 
+    transportAnnualCO2e, 
+    householdAnnualCO2e, 
+    totalAnnualCO2e,
+    mitigationCO2eSavings,
+    reducedAnnualCO2e
+  } = state.results;
 
   // Helper to format numbers with commas
   const formatNumber = (num: number): string => {
@@ -20,51 +28,13 @@ export const ResultsScreen: React.FC = () => {
   const transportPercentage = getPercentage(transportAnnualCO2e);
   const householdPercentage = getPercentage(householdAnnualCO2e);
 
-  // Generate dynamic environmental insights based on results
-  const insights = [];
+  // Filter dynamic mitigation tasks matched to active categories
+  const activeTasks = MITIGATION_TASKS.filter(task => 
+    state.mitigation.activeTaskIds.includes(task.id)
+  );
 
-  if (dietAnnualCO2e > 1500) {
-    insights.push({
-      type: 'diet',
-      icon: '🌱',
-      color: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400',
-      title: 'Optimize Diet Footprint',
-      text: 'Transitioning to more plant-based meals (like Vegetarian or Low-Meat) can slash food-related emissions by up to 50% and reduce global agricultural resource demand.',
-    });
-  }
-
-  if (transportAnnualCO2e > 2000) {
-    insights.push({
-      type: 'transport',
-      icon: '🚗',
-      color: 'border-teal-500/20 bg-teal-500/5 text-teal-400',
-      title: 'Reduce Transit Emissions',
-      text: 'Optimize daily commutes by carpooling, opting for public transit, or cycling when possible. If options allow, consider switching to an Electric Vehicle (EV) to lower travel emissions.',
-    });
-  }
-
-  if (householdAnnualCO2e > 1500 && !state.habits.household.electricity.isRenewableTariff) {
-    insights.push({
-      type: 'energy',
-      icon: '⚡',
-      color: 'border-cyan-500/20 bg-cyan-500/5 text-cyan-400',
-      title: 'Switch to Green Energy',
-      text: 'Enrolling in a certified 100% Green/Renewable Energy Tariff reduces grid electricity coefficients from 0.38 to 0.02 kg CO₂e/kWh, eliminating most of your electricity impact.',
-    });
-  }
-
-  // Base fallback if footprint is very low
-  if (insights.length === 0) {
-    insights.push({
-      type: 'general',
-      icon: '✨',
-      color: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400',
-      title: 'Excellent Sustainable Baseline',
-      text: 'Your carbon footprint is remarkably low and aligns with global climate targets. Share your diagnostic link with others to promote carbon reduction awareness!',
-    });
-  }
-
-  const isBelowTarget = totalAnnualCO2e <= 4000;
+  // Evaluate net adjusted target status
+  const isBelowTarget = reducedAnnualCO2e <= 4000;
 
   return (
     <div className="space-y-6">
@@ -77,33 +47,59 @@ export const ResultsScreen: React.FC = () => {
         </p>
       </div>
 
-      {/* Master KPI Banner */}
+      {/* Dynamic Master KPI Banner Upgrade */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 border border-slate-800/80 rounded-2xl p-6 text-center shadow-inner relative overflow-hidden">
-        <div className="absolute inset-0 bg-emerald-500/[0.02] pointer-events-none" />
+        <div className="absolute inset-0 bg-emerald-500/[0.01] pointer-events-none" />
         
-        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">
-          Estimated Annual Emissions
+        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+          Carbon Impact Summary
         </p>
         
-        <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono tracking-tight">
-          {formatNumber(totalAnnualCO2e)}{' '}
-          <span className="text-sm font-medium text-slate-400">kg CO₂e / year</span>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 py-2">
+          {/* Baseline Footprint */}
+          <div className="text-center sm:text-right">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Baseline Footprint</span>
+            <span className="text-xl sm:text-2xl font-bold text-slate-400 font-mono tracking-tight">
+              {formatNumber(totalAnnualCO2e)} <span className="text-xs font-normal">kg</span>
+            </span>
+          </div>
+
+          {/* Transition Indicator */}
+          <div className="text-slate-600 rotate-90 sm:rotate-0 text-xl font-bold">
+            ➔
+          </div>
+
+          {/* Net Adjusted Footprint */}
+          <div className="text-center sm:text-left">
+            <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider block">Net Footprint</span>
+            <span className="text-3xl sm:text-4xl font-extrabold text-emerald-400 font-mono tracking-tight drop-shadow-[0_0_15px_rgba(52,211,153,0.15)] animate-pulse">
+              {formatNumber(reducedAnnualCO2e)} <span className="text-xs font-semibold">kg CO₂e/yr</span>
+            </span>
+          </div>
         </div>
 
-        {/* Global Target Comparison Badge */}
-        <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border bg-slate-950/80">
-          <span className={`w-2 h-2 rounded-full ${isBelowTarget ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-          <span className="text-slate-400">
-            {isBelowTarget 
-              ? 'Below standard target of 4,000 kg CO₂e/yr' 
-              : `Above standard target by ${formatNumber(totalAnnualCO2e - 4000)} kg CO₂e/yr`
-            }
-          </span>
+        {/* Global Target Comparison & Dynamic Impact Badges */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border bg-slate-950/80 border-slate-800">
+            <span className={`w-2 h-2 rounded-full ${isBelowTarget ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+            <span className="text-slate-400">
+              {isBelowTarget 
+                ? 'Below standard target of 4,000 kg CO₂e/yr' 
+                : `Above standard target by ${formatNumber(reducedAnnualCO2e - 4000)} kg CO₂e/yr`
+              }
+            </span>
+          </div>
+
+          {mitigationCO2eSavings > 0 && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border bg-emerald-500/10 border-emerald-500/20 text-emerald-400 animate-fadeIn">
+              <span>🎉 Impact Created: Mitigated {formatNumber(mitigationCO2eSavings)} kg/yr!</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* 3-Category Breakdown Grid */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Habit Breakdown</h3>
         
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -186,31 +182,75 @@ export const ResultsScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Dynamic Recommendation Panel */}
+      {/* Personalized Mitigation Checklist Section */}
       <div className="space-y-3 border-t border-slate-800/60 pt-4">
-        <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-          Personalized Reduction Plan
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+            Your Personalized Eco-Action Plan
+          </h3>
+          <span className="text-[10px] text-slate-500 font-medium">
+            Select items to simulate carbon reduction
+          </span>
+        </div>
         
-        <div className="space-y-2.5 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
-          {insights.map((insight, index) => (
-            <div 
-              key={index}
-              className={`flex items-start gap-3 p-3.5 rounded-xl border border-slate-800/60 bg-slate-950/40`}
-            >
-              <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-sm shrink-0">
-                {insight.icon}
-              </div>
-              <div className="space-y-0.5">
-                <h4 className="text-xs font-bold text-slate-200">
-                  {insight.title}
-                </h4>
-                <p className="text-[11px] text-slate-400 leading-normal">
-                  {insight.text}
-                </p>
-              </div>
-            </div>
-          ))}
+        <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
+          {activeTasks.map((task) => {
+            const isCompleted = state.mitigation.completedTaskIds.includes(task.id);
+            return (
+              <label 
+                key={task.id}
+                className={`flex items-start gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
+                  isCompleted
+                    ? 'bg-emerald-500/5 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.05)]'
+                    : 'bg-slate-900/20 border-slate-800/80 hover:border-slate-700 hover:-translate-y-0.5'
+                }`}
+              >
+                {/* Custom Checkbox */}
+                <div className="mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={isCompleted}
+                    onChange={() => toggleTaskCompletion(task.id)}
+                    className="sr-only"
+                  />
+                  <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all duration-200 ${
+                    isCompleted ? 'border-emerald-500 bg-emerald-500 text-slate-950 scale-105 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'border-slate-700 bg-slate-950'
+                  }`}>
+                    {isCompleted && (
+                      <svg className="w-3.5 h-3.5 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+
+                {/* Task Title & Description */}
+                <div className="flex-1 min-w-0 text-left">
+                  <h4 className={`text-xs font-bold transition-all duration-200 ${
+                    isCompleted ? 'text-slate-500 line-through' : 'text-slate-200'
+                  }`}>
+                    {task.title}
+                  </h4>
+                  <p className={`text-[10px] leading-relaxed transition-all duration-200 mt-0.5 ${
+                    isCompleted ? 'text-slate-600 line-through' : 'text-slate-400'
+                  }`}>
+                    {task.description}
+                  </p>
+                </div>
+
+                {/* Impact Badge */}
+                <div className="shrink-0 pl-2">
+                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                    isCompleted 
+                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-extrabold' 
+                      : 'border-slate-800 bg-slate-900/50 text-slate-400'
+                  }`}>
+                    -{task.annualCO2eSaved} kg/yr
+                  </span>
+                </div>
+              </label>
+            );
+          })}
         </div>
       </div>
 
