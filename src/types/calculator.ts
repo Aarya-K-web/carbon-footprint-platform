@@ -1,3 +1,5 @@
+import { User } from '@supabase/supabase-js';
+
 export interface CommuteEntry {
   id: string;
   mode: 'ev' | 'hybrid' | 'gas-small' | 'gas-large' | 'motorcycle' | 'public-transit' | 'active' | '';
@@ -77,6 +79,10 @@ export interface CalculatorState {
 
   // Sprint 3: "What-If" Sandbox Simulator
   sandbox: SandboxState;
+
+  // Authentication session state properties
+  user: User | null;
+  loadingAuth: boolean;
 
   // UI/UX state management
   ui: {

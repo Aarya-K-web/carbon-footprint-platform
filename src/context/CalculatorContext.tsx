@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CalculatorState, CommuteEntry, CalculatorContextType, LogEntry } from '../types/calculator';
+import { supabase } from '../lib/supabaseClient';
 
 export interface MitigationTask {
   id: string;
@@ -139,6 +140,8 @@ const initialState: CalculatorState = {
     veganDaysPerWeekSim: 0,
     carKmReductionSim: 0,
   },
+  user: null,
+  loadingAuth: true,
   ui: {
     currentStep: 'welcome',
     isSubmitting: false,
@@ -280,6 +283,31 @@ const calculateResults = (
 
 export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<CalculatorState>(initialState);
+
+  // Set up active Supabase auth subscription listeners
+  useEffect(() => {
+    // Check active session on initial load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setState(prev => ({
+        ...prev,
+        user: session?.user ?? null,
+        loadingAuth: false,
+      }));
+    });
+
+    // Listen for auth state transitions (Sign In, Sign Out, Token Refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setState(prev => ({
+        ...prev,
+        user: session?.user ?? null,
+        loadingAuth: false,
+      }));
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Automatically recalculate emissions, update active tasks, and check gamification milestones
   useEffect(() => {
