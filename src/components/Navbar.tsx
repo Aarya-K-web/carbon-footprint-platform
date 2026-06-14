@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { validatePassword } from '../utils/authValidation';
 
 export const Navbar: React.FC = () => {
-  const { user, signOut, updateUserPassword } = useAuth();
+  const { user, userProfile, signOut, updateUserPassword } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
