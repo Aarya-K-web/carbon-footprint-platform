@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCalculator, MITIGATION_TASKS, HABIT_DICTIONARY } from '../context/CalculatorContext';
 import { REGIONAL_COMPARISONS } from '../types/calculator';
+import { AnimatedEcoIcon } from './eco-ui/AnimatedEcoIcon';
 
 export const ResultsScreen: React.FC = () => {
   const { 
@@ -92,7 +93,7 @@ export const ResultsScreen: React.FC = () => {
   const sandboxSavings = reducedAnnualCO2e - sandboxProjectedCO2e;
 
   return (
-    <div className="space-y-6 text-slate-100">
+    <div className="max-w-6xl mx-auto w-full space-y-8 text-slate-100">
       {/* Visual Header */}
       <div className="text-center pb-2 border-b border-slate-800/60">
         <span className="text-3xl" role="img" aria-label="analytics">📊</span>
@@ -105,28 +106,27 @@ export const ResultsScreen: React.FC = () => {
       {/* Gamified Streak & Badge Showcase Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Left Block: Streak Counter */}
-        <div className="bg-amber-500/[0.02] border border-amber-500/20 rounded-2xl p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
-          <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+          <div className="bg-amber-500/[0.02] border border-amber-500/20 rounded-xl p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
           
-          <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
-            <span className="text-xl">🔥</span>
+          <div className="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+            <AnimatedEcoIcon name="flame" size={80} intensity="epic" trigger="always" glowColor="#f59e0b" />
           </div>
           
           <div className="text-3xl font-extrabold text-amber-400 font-mono tracking-tight leading-none">
             {state.gamification.currentStreakDays}
           </div>
-          <div className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mt-1.5">
+          <div className="text-sm font-semibold text-amber-400 uppercase tracking-widest mt-1.5 font-display">
             Day Eco-Streak
           </div>
           
-          <div className="text-[9px] text-slate-500 mt-1">
+          <div className="text-xs text-slate-500 mt-1 font-body">
             Personal Record: {state.gamification.highestStreakDays} days
           </div>
         </div>
 
         {/* Right Block: Unlocked Badges Grid */}
-        <div className="bg-slate-900/10 border border-slate-800/80 rounded-2xl p-4 md:col-span-2 flex flex-col justify-between">
-          <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 text-left">
+        <div className="bg-slate-900/10 border border-slate-800/80 rounded-xl p-4 md:col-span-2 flex flex-col justify-between">
+          <div className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display mb-2 text-left">
             Earned Achievement Badges
           </div>
           
@@ -160,19 +160,19 @@ export const ResultsScreen: React.FC = () => {
       </div>
 
       {/* Dynamic Master KPI Banner */}
-      <div className="bg-slate-950 border border-emerald-500/20 rounded-2xl p-6 text-center shadow-2xl relative overflow-hidden">
+      <div className="bg-slate-950 border border-emerald-500/20 rounded-xl p-4 text-center shadow-2xl relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-teal-500/[0.02] pointer-events-none" />
         
-        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mb-2">
+        <p className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display mb-2">
           Carbon Impact Summary
         </p>
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 py-2">
           {/* Baseline Footprint */}
           <div className="text-center sm:text-right">
-            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Baseline Footprint</span>
-            <span className="text-xl sm:text-2xl font-bold text-slate-400 font-mono tracking-tight">
-              {formatNumber(totalAnnualCO2e)} <span className="text-xs font-normal">kg</span>
+            <span className="text-sm font-semibold text-slate-400 uppercase tracking-widest font-display block">Baseline Footprint</span>
+            <span className="text-4xl sm:text-5xl font-extrabold text-slate-300 font-mono tracking-tight">
+              {formatNumber(totalAnnualCO2e)} <span className="text-2xl text-slate-500 font-medium">kg</span>
             </span>
           </div>
 
@@ -183,9 +183,9 @@ export const ResultsScreen: React.FC = () => {
 
           {/* Net Adjusted Footprint */}
           <div className="text-center sm:text-left">
-            <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider block">Net Footprint</span>
-            <span className="text-3xl sm:text-4xl font-extrabold text-emerald-400 font-mono tracking-tight drop-shadow-[0_0_15px_rgba(52,211,153,0.25)] animate-pulse">
-              {formatNumber(reducedAnnualCO2e)} <span className="text-xs font-semibold">kg CO₂e/yr</span>
+            <span className="text-sm font-semibold text-emerald-400 uppercase tracking-widest font-display block">Net Footprint</span>
+            <span className="text-5xl sm:text-6xl font-extrabold text-emerald-400 font-mono tracking-tight drop-shadow-[0_0_15px_rgba(52,211,153,0.25)]">
+              {formatNumber(reducedAnnualCO2e)} <span className="text-2xl font-semibold text-emerald-400/70">kg CO₂e/yr</span>
             </span>
           </div>
         </div>
@@ -212,7 +212,7 @@ export const ResultsScreen: React.FC = () => {
 
       {/* Visual Carbon Equivalents Matrix (The Emotional Hook) */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display">
           Your Footprint in the Real World
         </h3>
         
@@ -225,10 +225,10 @@ export const ResultsScreen: React.FC = () => {
               </svg>
             </div>
             <div className="text-left space-y-1">
-              <div className="text-2xl font-extrabold text-white font-mono leading-none">
+              <div className="text-4xl font-extrabold text-white font-mono leading-none">
                 {equivalencies.treesRequiredCount.toFixed(1)}
               </div>
-              <h4 className="text-xs font-semibold text-slate-200">Mature Trees Required</h4>
+              <h4 className="text-xs font-semibold text-slate-300 font-display">Mature Trees Required</h4>
               <p className="text-[10px] text-slate-500 leading-relaxed">
                 Number of mature trees needed to absorb your annual carbon emissions in one year.
               </p>
@@ -244,10 +244,10 @@ export const ResultsScreen: React.FC = () => {
               </svg>
             </div>
             <div className="text-left space-y-1">
-              <div className="text-2xl font-extrabold text-white font-mono leading-none">
-                {formatNumber(equivalencies.iceCarDistanceEquivalentKm)}
+              <div className="text-4xl font-extrabold text-white font-mono leading-none">
+                {formatNumber(equivalencies.iceCarDistanceEquivalentKm)} <span className="text-xl text-slate-500 font-medium">km</span>
               </div>
-              <h4 className="text-xs font-semibold text-slate-200">Driving Kilometer Equivalent</h4>
+              <h4 className="text-xs font-semibold text-slate-300 font-display">Driving Kilometer Equivalent</h4>
               <p className="text-[10px] text-slate-500 leading-relaxed">
                 Equivalent travel distance in a standard internal combustion engine passenger car.
               </p>
@@ -258,7 +258,7 @@ export const ResultsScreen: React.FC = () => {
 
       {/* 3-Category Breakdown Grid */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Habit Breakdown</h3>
+        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display">Habit Breakdown</h3>
         
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           
@@ -266,12 +266,12 @@ export const ResultsScreen: React.FC = () => {
           <div className="bg-slate-900/20 border border-slate-800 p-4 rounded-xl flex flex-col justify-between">
             <div className="flex justify-between items-start">
               <div>
-                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Diet</span>
-                <div className="text-lg font-bold text-white font-mono mt-0.5">
-                  {formatNumber(dietAnnualCO2e)} <span className="text-[10px] text-slate-500">kg</span>
+                <span className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display">Diet</span>
+                <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono mt-1 leading-none">
+                  {formatNumber(dietAnnualCO2e)} <span className="text-lg text-slate-500 font-medium">kg</span>
                 </div>
               </div>
-              <span className="text-emerald-400 text-sm">🌱</span>
+              <span className="text-emerald-400 text-xl">🌱</span>
             </div>
             <div className="mt-4 space-y-1.5">
               <div className="flex justify-between text-[10px] text-slate-500">
@@ -291,12 +291,12 @@ export const ResultsScreen: React.FC = () => {
           <div className="bg-slate-900/20 border border-slate-800 p-4 rounded-xl flex flex-col justify-between">
             <div className="flex justify-between items-start">
               <div>
-                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Transport</span>
-                <div className="text-lg font-bold text-white font-mono mt-0.5">
-                  {formatNumber(transportAnnualCO2e)} <span className="text-[10px] text-slate-500">kg</span>
+                <span className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display">Transport</span>
+                <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono mt-1 leading-none">
+                  {formatNumber(transportAnnualCO2e)} <span className="text-lg text-slate-500 font-medium">kg</span>
                 </div>
               </div>
-              <span className="text-teal-400 text-sm">🚗</span>
+              <span className="text-teal-400 text-xl">🚗</span>
             </div>
             <div className="mt-4 space-y-1.5">
               <div className="flex justify-between text-[10px] text-slate-500">
@@ -316,12 +316,12 @@ export const ResultsScreen: React.FC = () => {
           <div className="bg-slate-900/20 border border-slate-800 p-4 rounded-xl flex flex-col justify-between">
             <div className="flex justify-between items-start">
               <div>
-                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Utilities</span>
-                <div className="text-lg font-bold text-white font-mono mt-0.5">
-                  {formatNumber(householdAnnualCO2e)} <span className="text-[10px] text-slate-500">kg</span>
+                <span className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display">Utilities</span>
+                <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono mt-1 leading-none">
+                  {formatNumber(householdAnnualCO2e)} <span className="text-lg text-slate-500 font-medium">kg</span>
                 </div>
               </div>
-              <span className="text-cyan-400 text-sm">⚡</span>
+              <span className="text-cyan-400 text-xl">⚡</span>
             </div>
             <div className="mt-4 space-y-1.5">
               <div className="flex justify-between text-[10px] text-slate-500">
@@ -343,7 +343,7 @@ export const ResultsScreen: React.FC = () => {
       {/* Native Global Context Comparison Chart */}
       <div className="space-y-3 border-t border-slate-800/60 pt-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display">
             Your Footprint vs. The World
           </h3>
           <span className="text-[10px] text-slate-500 font-medium font-mono">
@@ -352,23 +352,17 @@ export const ResultsScreen: React.FC = () => {
         </div>
         
         {/* Dynamic Leaderboard Comparison Container */}
-        <div className="space-y-3 bg-slate-900/10 border border-slate-800/80 p-4 rounded-2xl">
+        <div className="space-y-3 bg-slate-900/10 border border-slate-800/80 p-4 rounded-xl">
           {comparisonItems.map((item, index) => {
             const isUser = item.region === 'user';
             const isTarget = item.region === 'target';
             const widthPct = (item.annualCO2e / maxComparisonVal) * 100;
             
             return (
-              <div key={index} className="space-y-1 animate-fadeIn">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span className={isUser ? 'text-emerald-400 font-bold' : isTarget ? 'text-teal-400' : 'text-slate-400'}>
-                    {item.label} {isUser && '👈'}
-                  </span>
-                  <span className={`font-mono ${isUser ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
-                    {formatNumber(item.annualCO2e)} kg
-                  </span>
-                </div>
-                
+              <div key={index} className="grid grid-cols-[150px_1fr_auto] items-center gap-x-4 animate-fadeIn">
+                <span className={`text-xs font-semibold text-right truncate ${isUser ? 'text-emerald-400 font-bold' : isTarget ? 'text-teal-400' : 'text-slate-400'}`}>
+                  {item.label} {isUser && '👈'}
+                </span>
                 <div className="h-3.5 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-800/40">
                   <div 
                     className={`h-full rounded-full transition-all duration-700 ease-out ${
@@ -381,6 +375,9 @@ export const ResultsScreen: React.FC = () => {
                     style={{ width: `${widthPct}%` }}
                   />
                 </div>
+                <span className={`text-xs font-mono flex-shrink-0 ${isUser ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>
+                  {formatNumber(item.annualCO2e)} kg
+                </span>
               </div>
             );
           })}
@@ -390,7 +387,7 @@ export const ResultsScreen: React.FC = () => {
       {/* Personalized Mitigation Checklist Section */}
       <div className="space-y-3 border-t border-slate-800/60 pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display">
             Your Personalized Eco-Action Plan
           </h3>
           <span className="text-[10px] text-slate-500 font-medium">
@@ -461,14 +458,14 @@ export const ResultsScreen: React.FC = () => {
 
       {/* Daily Habit Action & Logging Ledger Module */}
       <div className="space-y-3 border-t border-slate-800/60 pt-4 text-left">
-        <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display">
           Daily Sustainable Habit Logger
         </h3>
         
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 bg-slate-900/20 border border-slate-800/80 p-5 rounded-2xl">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 bg-slate-900/20 border border-slate-800/80 p-4 rounded-xl">
           {/* Left Side: Habit Action Matrix Buttons (3/5 width) */}
           <div className="lg:col-span-3 space-y-2.5">
-            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">
+            <div className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display mb-1">
               Select Action to Log
             </div>
             
@@ -501,15 +498,15 @@ export const ResultsScreen: React.FC = () => {
 
           {/* Right Side: Chronological Activity Feed (2/5 width) */}
           <div className="lg:col-span-2 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-slate-800/80 pt-4 lg:pt-0 lg:pl-4">
-            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2.5">
+            <div className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display mb-2.5">
               Activity Ledger Logs ({state.activityLogs.length})
             </div>
             
             <div className="flex-1 max-h-[140px] overflow-y-auto pr-1 custom-scrollbar space-y-2">
               {state.activityLogs.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center py-6 text-center">
-                  <span className="text-slate-600 text-lg">📝</span>
-                  <p className="text-[9px] text-slate-500 max-w-[150px] leading-normal mt-1.5">
+                  <AnimatedEcoIcon name="flame" size={48} intensity="bold" trigger="always" glowColor="#10b981" />
+                  <p className="text-[9px] text-slate-500 max-w-[150px] leading-normal mt-3">
                     No tactical habits logged yet today. Tap an action button to begin tracking impact!
                   </p>
                 </div>
@@ -560,11 +557,11 @@ export const ResultsScreen: React.FC = () => {
 
       {/* Sprint 3: "What-If" Sandbox Simulator */}
       <div className="space-y-3 border-t border-slate-800/60 pt-4 text-left">
-        <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display">
           🔬 Climate Action "What-If" Simulator Sandbox
         </h3>
         
-        <div className="bg-slate-900/20 border border-slate-800 p-5 rounded-2xl space-y-4">
+        <div className="bg-slate-900/20 border border-slate-800 p-4 rounded-xl space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
             {/* Slider 1: Vegan Days per Week */}
@@ -611,7 +608,7 @@ export const ResultsScreen: React.FC = () => {
 
           {/* Real-time Comparative Projections */}
           <div className="bg-slate-950/80 border border-slate-850 p-4 rounded-xl text-center space-y-3">
-            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+            <div className="text-sm font-semibold text-slate-300 uppercase tracking-widest font-display">
               Projected Carbon Outcome
             </div>
 

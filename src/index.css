@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Nunito:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,8 +19,132 @@ body {
   background-color: #050D07;
   overflow-x: hidden;
   color: rgba(255, 255, 255, 0.9);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+@layer base {
+  :root {
+    --eco-emerald: #10b981;
+    --eco-teal: #14b8a6;
+    --eco-cyan: #22d3ee;
+    --eco-glow-emerald: 0 0 20px rgba(16, 185, 129, 0.15);
+    --eco-glow-teal: 0 0 20px rgba(20, 184, 166, 0.15);
+    --eco-glow-cyan: 0 0 20px rgba(34, 211, 238, 0.15);
+  }
+}
+
+@layer components {
+  .text-gradient {
+    @apply bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-subtle {
+    @apply bg-gradient-to-r from-emerald-300/80 via-teal-300/80 to-cyan-300/80 bg-clip-text text-transparent;
+  }
+
+  .glass {
+    @apply bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl;
+  }
+
+  .glass-hover {
+    @apply glass transition-all duration-300 hover:bg-white/[0.08] hover:backdrop-blur-3xl hover:shadow-[0_0_30px_rgba(16,185,129,0.15),0_0_60px_rgba(16,185,129,0.05)];
+  }
+
+  .glass-card {
+    @apply glass rounded-3xl p-6 sm:p-8 relative overflow-hidden;
+  }
+
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(800px at 50% -20%, rgba(16,185,129,0.04), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+@layer utilities {
+  .text-glow-emerald {
+    text-shadow: 0 0 20px rgba(16,185,129,0.3), 0 0 40px rgba(16,185,129,0.1);
+  }
+
+  .text-glow-teal {
+    text-shadow: 0 0 20px rgba(20,184,166,0.3), 0 0 40px rgba(20,184,166,0.1);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 0 0 20px rgba(34,211,238,0.3), 0 0 40px rgba(34,211,238,0.1);
+  }
+
+  .glow-ring-emerald {
+    box-shadow: 0 0 15px rgba(16,185,129,0.2), 0 0 30px rgba(16,185,129,0.1), inset 0 0 15px rgba(16,185,129,0.05);
+  }
+
+  .glow-ring-teal {
+    box-shadow: 0 0 15px rgba(20,184,166,0.2), 0 0 30px rgba(20,184,166,0.1), inset 0 0 15px rgba(20,184,166,0.05);
+  }
+
+  .tracking-premium {
+    letter-spacing: 0.02em;
+  }
+
+  .tracking-data {
+    letter-spacing: 0.04em;
+  }
+
+  .organic-bg {
+    animation: organic-drift 12s ease-in-out infinite;
+  }
+
+  .glass-breathe {
+    animation: glass-breathe 6s ease-in-out infinite;
+  }
+
+  .glitch-text {
+    animation: text-glitch 0.3s ease-in-out 3;
+  }
+
+  .glitch-number {
+    animation: number-glitch 0.25s ease-in-out 2;
+  }
+}
+
+@layer base {
+  ::selection {
+    background-color: rgba(16, 185, 129, 0.25);
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.2);
+    border-radius: 3px;
+    transition: background 0.2s;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(16, 185, 129, 0.4);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(16, 185, 129, 0.2) transparent;
+  }
 }

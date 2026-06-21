@@ -11,10 +11,14 @@
     "init-tailwind": "npx --no-install tailwindcss init -p"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.6.1",
     "@supabase/supabase-js": "^2.108.1",
+    "framer-motion": "^12.40.0",
+    "ogl": "^1.0.11",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-router-dom": "^7.17.0"
+    "react-router-dom": "^7.17.0",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
